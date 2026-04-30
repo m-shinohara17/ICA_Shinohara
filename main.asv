@@ -10,10 +10,34 @@ rng(seed);
 mixMat = ...
     [0.8, -0.5;
     -0.7, 0.9];
-
+% 二つの音声信号を一つの行列に
 for iData = 1:numel(inputFiles)
     inputPath = inputDir + inputFiles(iData);
     [src(:, iData), fs] = audioread(inputPath);
 end
 
-obs = mixMat * src.'; % mixing 
+% 各種定数定義
+tSrc = src.'; % 音声信号転置
+signalLength = size(src, 1); % 信号長確保
+X = mixMat * tSrc; % 信号を混合
+stepSize = 0.01; % ステップサイズ定義
+L = 1000; % 反復回数定義
+W = rand(2); % 分離信号初期化
+I = eye(2); % 単位行列用意
+
+% メインの計算
+for l = 0:L 
+    E = zeros(2); % ゼロ行列定義
+    Y = W * X; 
+    score = tanh(Y); % スコア関数(tanh)に代入
+    R = score * Y.';
+    E = E + (1/signalLength) * R;
+    W = W - stepSize * (E - eye(2)) * W;
+end 
+
+Y = W * X;
+Y1 = Y(1,:);
+Y2 = Y(2,:);
+
+soundsc (Y1,fs)
+
